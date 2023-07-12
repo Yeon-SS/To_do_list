@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>TO DO List</title>
+
+
+    <!-- 리액트 사용 준비 -->
+    <script src="https://unpkg.com/react@17/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+    <style>
+
+      *, ::after, ::before { box-sizing: border-box; }
+
+        #box2 {
+            line-height: 3rem;
+            width: 80%;
+            border: 5px outset antiquewhite;
+            margin: 2rem auto;
+            padding: 1rem;
+            color: rgb(104, 90, 60);
+            position: relative;
+        }
+
+        #box2::after {
+            line-height: 3rem;
+            width: 100%;
+            height: 100%;
+            content: "";
+            background-image: url(/img1.jpg);
+            background-repeat: no-repeat;
+            background-size: cover;
+            opacity: .15;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: -1;
+        }
+
+        #box2 h1 {
+            text-align: center;
+            letter-spacing: 0.1em;
+        }
+
+        #box {
+            text-align: center;
+        }
+
+        input {
+            margin-right: 10px;
+            padding: 3.5px 5px;
+            outline: none;
+            background-color: rgba(255, 250, 230, 0.6);
+            border: 1px solid rgba(124, 118, 115, 0.5);
+            border-radius: 3px;
+        }
+
+        input[type="checkbox"] {
+          width: 15px;
+          height: 15px;
+          background-color: aliceblue;
+        }
+
+        input[type="checkbox"]:checked::before {
+          width: 15px;
+          height: 15px;
+          background-color: none;
+        }
+
+        #box button {
+            font-weight: 600;
+            margin-left: -5px;
+            cursor: pointer;
+        }
+
+        #box button:hover  {
+            border-color: rgba(255, 197, 170, 0.8);
+            background-color: rgb(255, 179, 144);
+            color: rgb(255, 255, 255);
+        }
+
+        button {
+            margin-left: 10px;
+            padding: 2px 10px;
+            border-radius: 5px;
+            border-color: rgba(255, 179, 144, 0.3);
+            background-color: rgb(255, 179, 144);
+            color: rgb(255, 255, 255);
+        }
+
+       
+        #boxtodo {
+            margin-top: 2%;
+            margin-left: 30%;
+            color: rgba(56, 55, 55, 0.9);
+        }
+
+        #boxtodo button {
+            cursor: pointer;
+            color: rgba(56, 55, 55, 0.75);
+            border-color: rgba(243, 188, 163, 0.25);
+            background-color: rgb(255, 252, 248);
+        }
+
+        #boxtodo button:hover {
+            background-color: #fff;
+            color: #000;
+        }
+
+    </style>
+
+  </head>
+
+  <body>
+
+    <div id="root"></div>
+    <!-- 리액트를 사용하는 코드 입력 -->
+    <script type="text/babel">
+      // 애플리케이션 클래스 생성하기
+      class App extends React.Component {
+        constructor (props) {
+          super(props)
+         
+          // 지난 설정 불러오기  localStorage 객체 사용하는 부분
+          this.state = this.load()
+
+          // 메소드 바인드
+          // 메소드에 this 바인딩 시키지않으면 undefined 또는
+          // window 객체가 나올 수 있음. 
+          this.textChange = this.textChange.bind(this)
+          this.textKeyDown = this.textKeyDown.bind(this)
+          this.buttonClick = this.buttonClick.bind(this)
+          this.removeItem = this.removeItem.bind(this)
+          this.changeCheckData = this.changeCheckData.bind(this)
+        }
+
+         // localStorage 객체 사용하는 부분
+        save () {
+          localStorage.state = JSON.stringify(this.state)
+        }
+
+        load () {
+          let output
+          try { output = JSON.parse(localStorage.state)
+            //state 속성 전체를 읽어들임
+          } catch (e) {}
+          if (output !== undefined
+            && output.keyCount !== undefined
+            && output.currentValue !== undefined)
+            //속성이 제대로 존재하는지 확인
+          {
+            output = JSON.parse(localStorage.state)
+          } else {
+            output = {
+              keyCount: 0,
+              currentValue:'',
+              todos: []
+            }
+          }
+          return output
+        } 
+
+        componentDidUpdate () {
+          this.save()
+        }
+
+        render () {
+          return <div id="box2">
+            <h1>하루 일정 체크</h1>  
+            <div id="box">
+                <input id="checked"
+                value={this.state.currentValue}
+                onChange={this.textChange}
+                onKeyDown={this.textKeyDown} />
+                <button onClick={this.buttonClick}>추가하기</button>
+            </div>
+            <div id="boxtodo">
+              {this.state.todos.map((todo) => {
+                return <TodoItem
+                  dataKey={todo.key}
+                  isDone={todo.isDone}
+                  text={todo.text}
+                  removeItem={this.removeItem}
+                  changeCheckData={this.changeCheckData} />
+              })}
+            </div>
+          </div>
+        }
+
+        textChange (event) {
+          this.setState({
+            currentValue: event.target.value
+          })
+        }
+
+        textKeyDown (event) {
+          const ENTER = 13
+          if (event.keyCode === ENTER) {
+            this.buttonClick()
+          }
+        }
+
+        buttonClick (event) {
+          if (this.state.currentValue.trim() !== '') {
+            this.setState({
+              todos: [...this.state.todos, {
+                key: this.state.keyCount.toString(),
+                isDone: false,
+                text: this.state.currentValue
+              }]
+            })
+            this.state.keyCount += 1
+            this.state.currentValue = ''
+          }
+        }
+
+        removeItem (key) {
+          this.setState({
+            todos: this.state.todos.filter((todo) => {
+              return todo.key !== key
+            })
+          })
+        }
+
+        changeCheckData (key, changed) {
+          let target = [...this.state.todos]
+          target.filter((todo) => todo.key === key)[0].isDone = changed
+          this.setState({
+            todos: target
+          })
+        }
+      }
+
+      class TodoItem extends React.Component {
+        constructor (props) {
+          super(props)
+          this.state = {
+            isDone: props.isDone
+          }
+          this.checkboxClick = this.checkboxClick.bind(this)
+        }
+
+        render () {
+          const textStyle = {}
+          textStyle.textDecoration
+            = this.state.isDone ? 'line-through' : ''
+          return (
+            <div style={textStyle}>
+              <input
+                type="checkbox"
+                checked={this.state.isDone}
+                onChange={this.checkboxClick} />
+              <span>{this.props.text}</span>
+              <button onClick={()=>this.props.removeItem(this.props.dataKey)}>제거
+              </button>
+            </div>
+          )
+        }
+
+        checkboxClick () {
+          const changed = !this.state.isDone
+          this.props.changeCheckData(this.props.dataKey, changed)
+        }
+        componentDidUpdate (prevProps) {
+          if (prevProps.isDone !== this.props.isDone) {
+            this.setState({
+              isDone: this.props.isDone
+            })
+          }
+        }
+      }
+
+      // 출력하기
+      const container = document.getElementById('root')
+      ReactDOM.render(<App />, container)
+    </script>
+
+  </body>
+</html>
